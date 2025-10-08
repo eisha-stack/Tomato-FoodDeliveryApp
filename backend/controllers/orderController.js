@@ -2,15 +2,17 @@ import orderModel from "../models/orderModels.js";
 import userModel from "../models/userModel.js"
 import Stripe from "stripe"
 
+// Initialize Stripe with your secret key
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 //placing user order from frontend
 
 const placeOrder = async (req,res) =>{
     const frontend_url = "http://localhost:5173"
     try {
-        const newOrder = newModel({
+        const newOrder = new orderModel({
             userId:req.body.userId,
-            item:req.body.items,
+            items:req.body.items,
             amount:req.body.amount,
             address:req.body.address
         })
@@ -23,9 +25,9 @@ const placeOrder = async (req,res) =>{
                 product_data:{
                     name:item.name
                 },
-                unit_amount:item.price*100
+                unit_amount:item.price*100 // rupees → paise
             },
-            qunatity:item.quantity
+            quantity:item.quantity
         }))
 
         line_items.push({
@@ -43,6 +45,7 @@ const placeOrder = async (req,res) =>{
             line_items:line_items,
             mode:'payment',
             success_url:`${frontend_url}/verify?success=true&orderId=${newOrder._id}`,
+            cancel_url:`${frontend_url}/verify?success=false&orderId=${newOrder._id}`
 
         })
         res.json({success:true,session_url:session.url})
